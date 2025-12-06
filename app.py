@@ -12,6 +12,14 @@ from utils import extract_audio, transcribe_audio, group_segments_by_time, extra
 APP_TITLE = "오늘 녹취록"
 st.set_page_config(page_title=APP_TITLE, layout="wide", initial_sidebar_state="auto")
 
+# --- Initialize DB Manager immediately ---
+if 'db_manager' not in st.session_state:
+    try:
+        st.session_state.db_manager = DBManager('editor.db')
+    except Exception as e:
+        st.error(f"DB 초기화 실패: {e}")
+
+
 # Custom CSS for Modern Dark Mode & Card Styling
 st.markdown("""
 <style>
