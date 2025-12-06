@@ -25,6 +25,7 @@ def extract_audio(youtube_url, output_path="downloads"):
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
         },
         'nocheckcertificate': True,
+        'ignoreerrors': True,
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
