@@ -6,36 +6,46 @@ import re
 def extract_audio(youtube_url, output_path="downloads"):
     """
     Downloads audio from a YouTube video using yt-dlp.
-    Returns the path to the downloaded audio file and the video title.
+    Returns the path to the downloaded audio file, the video title, and duration.
     """
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
     ydl_opts = {
         'format': 'bestaudio/best',
+        'ignoreerrors': True,
+        'nocheckcertificate': True,
+        'quiet': True,
+        'outtmpl': f'{output_path}/%(id)s.%(ext)s',
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        },
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
             'preferredquality': '192',
         }],
-        'outtmpl': f'{output_path}/%(id)s.%(ext)s',
-        'quiet': True,
-        'extractor_args': {'youtube': {'player_client': ['web', 'android']}},
-        'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
-        },
-        'nocheckcertificate': True,
-        'ignoreerrors': True,
     }
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info_dict = ydl.extract_info(youtube_url, download=True)
-        video_title = info_dict.get('title', 'Unknown Title')
-        video_id = info_dict.get('id')
-        duration = info_dict.get('duration')
-        file_path = f"{output_path}/{video_id}.mp3"
-    
-    return file_path, video_title, duration
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # download=True ensures it downloads
+            info = ydl.extract_info(youtube_url, download=True)
+            
+            # Defensive Code: Handle case where info is None (failed download)
+            if info is None:
+                raise Exception("다운로드 실패: 올바른 URL인지 확인하거나, 해당 영상에 접근할 수 없습니다 (403/Forbidden 등).")
+            
+            video_title = info.get('title', 'Unknown Title')
+            video_id = info.get('id')
+            duration = info.get('duration')
+            file_path = f"{output_path}/{video_id}.mp3"
+            
+            return file_path, video_title, duration
+
+    except Exception as e:
+        # Re-raise with a clear message for the UI to display
+        raise Exception(f"Video Download Error: {str(e)}")
 
 def transcribe_audio(audio_path, learned_words=None, model_name="turbo"):
     """
