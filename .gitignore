@@ -1,0 +1,31 @@
+# 가상환경 폴더 (가장 중요! 용량 주범)
+venv/
+.venv/
+env/
+
+# 파이썬 캐시 파일
+__pycache__/
+*.pyc
+
+# 맥 시스템 파일
+.DS_Store
+
+# 보안 파일 (절대 올리면 안 됨!)
+.env
+.streamlit/secrets.toml
+# 거대 AI 모델 파일 무시 (가장 중요!)
+*.pt
+*.bin
+*.onnx
+*.safetensors
+
+# 맥 시스템 파일
+.DS_Store
+
+# 보안 파일
+.streamlit/secrets.toml
+# 다운로드된 미디어 파일 무시 (중요!)
+downloads/
+*.mp3
+*.mp4
+*.webm
