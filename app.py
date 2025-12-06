@@ -99,8 +99,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- State Initialization ---
+if 'db_manager' not in st.session_state:
+    st.session_state.db_manager = DBManager('editor.db')
+    # Compatibility with existing code expecting 'db'
+    st.session_state.db = st.session_state.db_manager
+
 if 'db' not in st.session_state:
-    st.session_state.db = DBManager()
+    # This should be covered by above, but as fallback
+    st.session_state.db = st.session_state.db_manager if 'db_manager' in st.session_state else DBManager('editor.db')
 
 if 'current_project_id' not in st.session_state:
     st.session_state.current_project_id = None
