@@ -29,3 +29,9 @@ downloads/
 *.mp3
 *.mp4
 *.webm
+# 모델 파일 무시
+*.pt
+*.bin
+*.onnx
+models/
+cache/

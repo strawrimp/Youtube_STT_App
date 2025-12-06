@@ -9,7 +9,7 @@ from utils import extract_audio, transcribe_audio, group_segments_by_time, extra
 # 키 관리는 이제 Sidebar 상단의 st.secrets 로직에서 처리합니다. 
 
 # --- Setup & Styling ---
-APP_TITLE = "🎙️ 오늘 녹취록"
+APP_TITLE = "오늘 녹취록"
 st.set_page_config(page_title=APP_TITLE, layout="wide", initial_sidebar_state="auto")
 
 # Custom CSS for Modern Dark Mode & Card Styling
@@ -112,7 +112,7 @@ if 'subtitles' not in st.session_state:
     st.session_state.subtitles = []
 
 # --- Sidebar ---
-st.sidebar.title("오늘공동체 🪄")
+st.sidebar.title("오늘기록원")
 
 
 # 0. API 키 관리 (Secrets) - AI 기능 제거로 인해 삭제됨
