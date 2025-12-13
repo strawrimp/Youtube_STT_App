@@ -15,6 +15,7 @@ class Project(Base):
     video_duration = Column(Float, nullable=True)
     last_position = Column(Float, default=0.0)
 
+    assignee = Column(String, nullable=True) # User nickname
     subtitles = relationship("Subtitle", back_populates="project", cascade="all, delete-orphan")
 
 class Subtitle(Base):
@@ -25,10 +26,7 @@ class Subtitle(Base):
     start_time = Column(Float, nullable=False)
     end_time = Column(Float, nullable=False)
     text = Column(Text, nullable=False)
-    is_completed = Column(Integer, default=0) # SQLite doesn't have native Boolean, use Integer 0/1 properly or sqlalchemy handles it. Using Boolean in sqlalchemy usually maps to int/bool. Let's keep Boolean type for ORM.
-    # Actually, let's use Boolean from sqlalchemy. 
-    # But wait, original code used standard sqlalchemy types.
-    # Let's redefine.
+    is_completed = Column(Integer, default=0)
     
     project = relationship("Project", back_populates="subtitles")
 
@@ -46,14 +44,22 @@ def init_db(db_path="editor.db"):
     engine = get_db_engine(db_path)
     Base.metadata.create_all(engine)
     
-    # Auto-Migration: Check if is_completed exists in subtitles
-    # Simple workaround for SQLite migration without alembic
+    # Auto-Migration
     from sqlalchemy import inspect, text
     inspector = inspect(engine)
-    columns = [c['name'] for c in inspector.get_columns('subtitles')]
-    if 'is_completed' not in columns:
+    
+    # 1. Check is_completed in subtitles
+    cols_subs = [c['name'] for c in inspector.get_columns('subtitles')]
+    if 'is_completed' not in cols_subs:
         with engine.connect() as conn:
             conn.execute(text("ALTER TABLE subtitles ADD COLUMN is_completed BOOLEAN DEFAULT 0"))
+            conn.commit()
+            
+    # 2. Check assignee in projects
+    cols_projs = [c['name'] for c in inspector.get_columns('projects')]
+    if 'assignee' not in cols_projs:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE projects ADD COLUMN assignee VARCHAR"))
             conn.commit()
             
     return sessionmaker(bind=engine)
@@ -62,12 +68,13 @@ class DBManager:
     def __init__(self, db_path="editor.db"):
         self.Session = init_db(db_path)
 
-    def create_project(self, youtube_url, title, video_duration=None):
+    def create_project(self, youtube_url, title, video_duration=None, assignee=None):
         session = self.Session()
         project = Project(
             youtube_url=youtube_url, 
             title=title, 
-            video_duration=video_duration or 0
+            video_duration=video_duration or 0,
+            assignee=assignee
         )
         session.add(project)
         session.commit()
@@ -91,12 +98,15 @@ class DBManager:
             total = len(p.subtitles)
             completed = sum(1 for s in p.subtitles if s.is_completed)
             
-            status = "⚪" # New/Not started
+            status = "⚪"
             if total > 0:
                 if completed == total:
                     status = "🟢"
                 elif completed > 0:
                     status = "🟡"
+            
+            # Formatting progress as percentage
+            pct = int((completed / total) * 100) if total > 0 else 0
             
             result.append({
                 "id": p.id,
@@ -104,7 +114,8 @@ class DBManager:
                 "youtube_url": p.youtube_url,
                 "created_at": p.created_at,
                 "status": status,
-                "progress": f"{completed}/{total}"
+                "progress_pct": pct,
+                "assignee": p.assignee
             })
         session.close()
         return result
