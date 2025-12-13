@@ -1,0 +1,181 @@
+/* --- Global Typography & Reset --- */
+html, body, .stApp, .stMarkdown, .stText, p, h1, h2, h3, h4, h5, h6, span, div {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif !important;
+    color: #E2E8F0; /* Slate 200 */
+}
+html, body {
+    font-size: 0.9rem !important; /* Slightly larger base */
+    line-height: 1.6;
+}
+.stApp {
+    background-color: #111827; /* Gray 900 - Deep Dark */
+}
+
+/* --- Block Containers --- */
+.block-container {
+    padding-top: 2rem !important;
+    padding-bottom: 4rem !important;
+    max-width: 95% !important;
+}
+
+/* --- Scrollbar Customization --- */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #1F2937; 
+}
+::-webkit-scrollbar-thumb {
+    background: #4B5563; 
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #6B7280; 
+}
+
+/* --- Buttons (Global) --- */
+.stButton > button {
+    border-radius: 8px !important;
+    border: 1px solid #374151 !important; /* Gray 700 */
+    background-color: #1F2937 !important; /* Gray 800 */
+    color: #E5E7EB !important; /* Gray 200 */
+    font-weight: 500 !important;
+    font-size: 0.9rem !important;
+    padding: 0.5rem 1rem !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.stButton > button:hover {
+    background-color: #374151 !important; /* Gray 700 */
+    border-color: #6B7280 !important; /* Gray 500 */
+    color: #FFFFFF !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+.stButton > button:active {
+    transform: translateY(0);
+}
+
+/* Primary Button (Green Accent) */
+.stButton > button[kind="primary"] {
+    background: linear-gradient(135deg, #059669 0%, #10B981 100%) !important;
+    border: none !important;
+    color: white !important;
+    box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.4);
+}
+.stButton > button[kind="primary"]:hover {
+    box-shadow: 0 6px 8px -1px rgba(16, 185, 129, 0.5);
+    filter: brightness(1.1);
+}
+
+/* Secondary Actions (Darker) */
+div[data-testid="stHorizontalBlock"] button[kind="secondary"] {
+    background-color: #1F2937;
+    border-color: #374151;
+}
+
+/* --- Inputs & TextAreas --- */
+.stTextInput input, .stTextArea textarea {
+    background-color: #1F2937 !important; /* Gray 800 */
+    color: #F9FAFB !important; /* Gray 50 */
+    border: 1px solid #374151 !important;
+    border-radius: 8px !important;
+    padding: 0.75rem !important;
+    font-size: 0.95rem !important;
+    transition: all 0.2s ease;
+}
+.stTextInput input:focus, .stTextArea textarea:focus {
+    border-color: #6366F1 !important; /* Indigo 500 */
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+    background-color: #111827 !important;
+}
+
+/* --- Sidebar --- */
+section[data-testid="stSidebar"] {
+    background-color: #0F1115; /* Even darker for sidebar */
+    border-right: 1px solid #1F2937;
+}
+section[data-testid="stSidebar"] .block-container {
+    padding-top: 1rem !important;
+}
+
+/* Sidebar Project Buttons */
+section[data-testid="stSidebar"] div.stButton > button {
+    width: 100%;
+    text-align: left;
+    background-color: #1F2937;
+    color: #D1D5DB;
+    border: 1px solid transparent !important;
+    border-left: 3px solid transparent !important; /* Marker space */
+    margin-bottom: 0.5rem;
+    padding: 0.75rem 1rem !important;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+section[data-testid="stSidebar"] div.stButton > button:hover {
+    background-color: #374151;
+    color: white;
+    border-left-color: #6B7280 !important;
+}
+
+/* --- Card Concepts --- */
+.card {
+    background-color: #1F2937;
+    border: 1px solid #374151;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Checkbox --- */
+.stCheckbox label {
+    font-size: 0.9rem !important;
+    color: #D1D5DB !important;
+}
+
+/* --- Video --- */
+iframe {
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* --- Expander --- */
+.streamlit-expanderHeader {
+    background-color: #1F2937 !important;
+    border-radius: 8px !important;
+    border: 1px solid #374151 !important;
+    color: #E5E7EB !important;
+}
+.streamlit-expanderContent {
+    background-color: #111827 !important;
+    border: 1px solid #374151 !important;
+    border-top: none !important;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    padding: 1rem !important;
+}
+
+/* --- Toast --- */
+.stToast {
+    background-color: #1F2937 !important;
+    border: 1px solid #374151 !important;
+    color: white !important;
+}
+
+/* --- Dividers --- */
+hr {
+    margin: 2em 0 !important;
+    border-color: #374151 !important;
+}
+
+/* --- Custom Highlights --- */
+.highlight-completed textarea {
+    background-color: rgba(6, 78, 59, 0.3) !important; /* Dark Green */
+    border-color: #059669 !important;
+}
+.highlight-active {
+    border-left: 3px solid #10B981 !important;
+}

@@ -1,0 +1,106 @@
+import sqlite3
+import json
+
+DB_NAME = "editor.db"
+
+def get_connection():
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    """
+    데이터베이스 초기화 및 구버전 DB 자동 업데이트(Migration)
+    """
+    conn = get_connection()
+    c = conn.cursor()
+    
+    # 1. 기본 테이블 생성 (없을 경우)
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS projects (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            youtube_url TEXT,
+            title TEXT,
+            transcripts TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            status TEXT DEFAULT 'Ready',
+            assignee TEXT
+        )
+    ''')
+    
+    # 2. 구버전 DB 마이그레이션 (status 컬럼이 없는 경우 추가)
+    try:
+        c.execute("SELECT status FROM projects LIMIT 1")
+    except sqlite3.OperationalError:
+        print("🔧 구버전 DB 감지: 'status' 컬럼을 추가합니다...")
+        c.execute("ALTER TABLE projects ADD COLUMN status TEXT DEFAULT 'Ready'")
+        conn.commit()
+
+    # 3. 구버전 DB 마이그레이션 (assignee 컬럼이 없는 경우 추가)
+    try:
+        c.execute("SELECT assignee FROM projects LIMIT 1")
+    except sqlite3.OperationalError:
+        print("🔧 구버전 DB 감지: 'assignee' 컬럼을 추가합니다...")
+        c.execute("ALTER TABLE projects ADD COLUMN assignee TEXT")
+        conn.commit()
+        
+    conn.close()
+
+def get_projects():
+    """모든 프로젝트 목록 가져오기"""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        # 삭제 여부 상관없이 모든 데이터 로드
+        c.execute("SELECT * FROM projects ORDER BY id DESC")
+        rows = c.fetchall()
+        return [dict(row) for row in rows]
+    except Exception as e:
+        print(f"DB Error (get_projects): {e}")
+        return []
+    finally:
+        conn.close()
+
+def get_transcripts_for_project(project_id):
+    """자막 데이터 가져오기"""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT transcripts FROM projects WHERE id = ?", (project_id,))
+        row = c.fetchone()
+        if row and row['transcripts']:
+            return json.loads(row['transcripts'])
+        return []
+    except Exception as e:
+        print(f"DB Error (get_transcripts): {e}")
+        return []
+    finally:
+        conn.close()
+
+def update_transcript(project_id, chunk_index, new_text, completed):
+    """자막 수정 및 상태 업데이트"""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT transcripts FROM projects WHERE id = ?", (project_id,))
+        row = c.fetchone()
+        
+        if row:
+            transcripts = json.loads(row['transcripts'])
+            
+            if 0 <= chunk_index < len(transcripts):
+                transcripts[chunk_index]['text'] = new_text
+                transcripts[chunk_index]['completed'] = completed
+                
+                c.execute(
+                    "UPDATE projects SET transcripts = ? WHERE id = ?", 
+                    (json.dumps(transcripts, ensure_ascii=False), project_id)
+                )
+                conn.commit()
+    except Exception as e:
+        print(f"DB Save Error: {e}")
+    finally:
+        conn.close()
+
+# 앱 실행 시 자동 실행되어 DB를 고침
+init_db()

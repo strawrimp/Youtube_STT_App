@@ -1,0 +1,142 @@
+import streamlit as st
+import db_manager
+from utils import get_ai_correction, format_timestamp
+
+# --- 페이지 설정 (반드시 맨 처음에 와야 함) ---
+st.set_page_config(layout="wide", page_title="오늘기록원", page_icon="📝")
+
+# --- CSS 스타일 주입 (영상 고정 & 다크 테마) ---
+st.markdown("""
+    <style>
+        /* 전체 폰트 가독성 향상 */
+        * { font-family: 'Pretendard', sans-serif !important; }
+        
+        /* 영상 고정 (Sticky Video) */
+        div[data-testid="stVerticalBlock"] > div:has(iframe) {
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            background-color: #0E1117;
+            padding-bottom: 10px;
+        }
+
+        /* 텍스트 에디터 스타일 */
+        .stTextArea textarea {
+            background-color: #262730 !important;
+            color: #FFFFFF !important;
+            border: 1px solid #4A4A4A !important;
+            border-radius: 8px !important;
+        }
+        .stTextArea textarea:focus {
+            border: 1px solid #FF4B4B !important;
+            box-shadow: 0 0 5px rgba(255, 75, 75, 0.5);
+        }
+
+        /* 버튼 스타일 */
+        .stButton button {
+            border-radius: 20px !important;
+            border: none !important;
+            transition: all 0.3s;
+        }
+        .stButton button:hover {
+            transform: scale(1.02);
+            filter: brightness(1.1);
+        }
+        
+        /* 완료 체크박스 강조 */
+        div[data-testid="stCheckbox"] label {
+            font-size: 1.1rem !important;
+            color: #00CC96 !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# --- 세션 초기화 ---
+if 'user_name' not in st.session_state:
+    st.session_state.user_name = ""
+if 'current_project_id' not in st.session_state:
+    st.session_state.current_project_id = None
+
+# --- 사이드바: 프로젝트 목록 ---
+with st.sidebar:
+    st.title("📂 작업 리스트")
+    st.session_state.user_name = st.text_input("작업자 닉네임", value=st.session_state.user_name)
+    
+    st.divider()
+
+    # DB에서 모든 프로젝트 강제 로드
+    projects = db_manager.get_projects() 
+    
+    for p in projects:
+        # 상태에 따른 아이콘 및 스타일
+        icon = "🟢" if p['status'] == 'Completed' else ("🟡" if p['status'] == 'In Progress' else "⚪")
+        if p['assignee'] == st.session_state.user_name and st.session_state.user_name != "":
+            icon = "🟢 (내 작업)"
+        
+        # 버튼 라벨 생성
+        label = f"{icon} {p['title']}"
+        
+        if st.button(label, key=f"proj_{p['id']}", use_container_width=True):
+            st.session_state.current_project_id = p['id']
+            st.rerun()
+
+# --- 메인 화면 로직 ---
+if st.session_state.current_project_id:
+    # 선택된 프로젝트 데이터 로드
+    project_id = st.session_state.current_project_id
+    project_data = next((p for p in projects if p['id'] == project_id), None)
+    
+    if project_data:
+        # 1. 상단: 유튜브 영상 (고정됨)
+        st.video(project_data['youtube_url'])
+        
+        # 2. 하단: 자막 에디터 (스크롤 영역)
+        transcripts = db_manager.get_transcripts_for_project(project_id)
+        
+        st.subheader(f"📝 편집 중: {project_data['title']}")
+        
+        # 에디터 컨테이너 (높이 지정으로 내부 스크롤 유도)
+        with st.container(height=600, border=True):
+            for index, t in enumerate(transcripts):
+                col_control, col_editor = st.columns([0.15, 0.85])
+                
+                # [왼쪽] 컨트롤 패널
+                with col_control:
+                    # 시간 버튼
+                    if st.button(f"⏱ {format_timestamp(t['start'])}", key=f"time_{index}"):
+                        st.session_state.video_time = t['start']
+                        st.rerun()
+                    
+                    # 완료 체크박스 (버튼 바로 아래)
+                    is_done = st.checkbox("완료", value=t.get('completed', False), key=f"check_{index}")
+                    if is_done != t.get('completed', False):
+                        db_manager.update_transcript(project_id, index, t['text'], is_done)
+                        st.rerun()
+
+                # [오른쪽] 텍스트 에디터 & AI
+                with col_editor:
+                    # 텍스트 에디터 (데이터 강제 바인딩)
+                    new_text = st.text_area(
+                        label="내용 편집",
+                        value=t['text'],
+                        height=150,
+                        key=f"text_{project_id}_{index}",
+                        label_visibility="collapsed"
+                    )
+                    
+                    # 변경 시 자동 저장
+                    if new_text != t['text']:
+                        db_manager.update_transcript(project_id, index, new_text, is_done)
+
+                    # AI 교정 버튼 (에디터 하단)
+                    if st.button("✨ AI 교정 제안", key=f"ai_{index}"):
+                        with st.spinner("AI가 분석 중입니다..."):
+                            suggestion = get_ai_correction(new_text)
+                            # 결과를 세션에 저장해 텍스트창에 반영하고 싶다면 로직 추가 필요
+                            # 여기서는 제안을 바로 보여줌
+                            st.info(f"💡 AI 제안: {suggestion}")
+
+    else:
+        st.error("프로젝트 데이터를 찾을 수 없습니다.")
+else:
+    st.info("👈 왼쪽 사이드바에서 작업을 선택해주세요.")
