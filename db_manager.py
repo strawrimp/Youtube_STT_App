@@ -86,12 +86,26 @@ class DBManager:
     def get_all_projects(self):
         session = self.Session()
         projects = session.query(Project).order_by(Project.created_at.desc()).all()
-        result = [{
-            "id": p.id,
-            "title": p.title,
-            "youtube_url": p.youtube_url,
-            "created_at": p.created_at
-        } for p in projects]
+        result = []
+        for p in projects:
+            total = len(p.subtitles)
+            completed = sum(1 for s in p.subtitles if s.is_completed)
+            
+            status = "⚪" # New/Not started
+            if total > 0:
+                if completed == total:
+                    status = "🟢"
+                elif completed > 0:
+                    status = "🟡"
+            
+            result.append({
+                "id": p.id,
+                "title": p.title,
+                "youtube_url": p.youtube_url,
+                "created_at": p.created_at,
+                "status": status,
+                "progress": f"{completed}/{total}"
+            })
         session.close()
         return result
 
